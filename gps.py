@@ -19,6 +19,8 @@ from collections import deque
 import json
 from threading import Thread
 import logging as log
+import subprocess
+import datetime
 #log.basicConfig(filename='GPS.log',level=log.DEBUG,format=    '%(asctime)s %(levelname)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 #ser=serial.Serial('/dev/ttyUSB0',4800,timeout=1)
@@ -53,6 +55,7 @@ class GPS():
 	gpsStatLock=2
 	def __init__(self):
 		#add serial here
+		self.controlClock=False
 		self.cur_pos=Pos()
 		self.checkT=0
 		self.checkF=0
@@ -83,6 +86,29 @@ class GPS():
 			j["alt"]=self.cur_pos.alt
 
 		return j 
+	def checkSystemTime(self):
+		#check system time and update it if needed and flag is set
+		sysTime=datetime.datetime.Now()
+		gpsTime=datetime.datetime(self.year,self.month,self.day,self.hour,self.min,self.sec)
+		delta=sysTime-gpsTime
+		if delta<0:
+			delta=delta*-1
+		if delta>30:
+			log.warning("Time Drift of : "+str(delta)+" seconds")
+			if self.controlClock:
+				#using 30 seconds now, but could probably make it less (2?)
+				try:
+					dateString=str(self.year)+str(self.month)+str(self.day)
+					subprocess.check_output(['date','+%Y%m%d','-s',dateString])
+					timeString=str(self.hour)+":"+str(self.min)+":"+str(self.sec)
+					subprocess.check_output(['date','+%T','-s',timeString])
+					log.info("Time Shift Complete")
+				except:
+					log.error("Setting Time Failed")
+					log.error(sys.exc_info())
+			else:
+				log.warning("GPS and System time out of sync")
+				log.warning("GPS Does not have Control over system clock")
 	def check_sum_percent(self):
 		if self.checkT>0:
 			return float(self.checkT)/float(self.checkT+self.checkF)
@@ -252,6 +278,7 @@ def bearing(s,e):
 
 def run(g):
 	gps=g
+	i=0
 	while gps.status!=gps.gpsStatConn:
 		gps.connect()
 		log.warning("Trying to connect to GPS")
@@ -259,7 +286,9 @@ def run(g):
 	log.info("Connected")
 	while True:
 		line=gps.ser.readline()
-		
+		if i%100==0:
+			log.info("Checking time")
+			gps.checkSystemTime()	
 		if len(line)>0:
 			gps.feed(line)
 		#gps.printpos()
