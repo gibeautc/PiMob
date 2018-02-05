@@ -1,0 +1,22 @@
+#!/bin/bash
+# -ev negates the regular expression so it will not show up in the logfile window only
+# for the file following the command(s). 
+# -cS uses the color scheme set in multitail.conf for only the file follwing the command.
+# -i specific file to tail.
+# -wh window 2's only 12 lines high
+
+# The order of these lines matter as each color scheme and regular expression are tied to
+# the file that is being tailed. Everything before each -i is tied to the options before it.
+
+confpath="/home/pi/SatCom_Client/mul.conf"
+
+multitail --config $confpath \
+-cS BanColor \
+-t "Client Sync" \
+-i /home/pi/logs/client_sync \
+-cS BanColor \
+-t "Local Conns" \
+-i /home/pi/logs/client_localcon \
+-cS BanColor \
+-t "WatchDog" \
+-i /home/pi/logs/client_watchdog
