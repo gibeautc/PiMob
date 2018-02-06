@@ -32,7 +32,6 @@ class entry:
 		curs.execute(q,[self.address,])
 		d=curs.fetchall()
 		if len(d)==0:
-			
 			adds=adds+1
 			log.debug("Not in devices yet")
 			q="insert into devices(address,name,sec) values(%s,%s,%s)"
@@ -121,15 +120,27 @@ def dbWorker():
 		i.addDB()
 		que.task_done()
 
-if __name__=="__main__":
-    #check time?
-	global adds
-	g=gps.start()
+def startDBWorker():
 	t=Thread(target=dbWorker)
 	t.name="dbWorker"
 	t.daemon=True
 	t.start()
+	return t
+
+if __name__=="__main__":
+    #check time?
+	#global adds
+	#get gps object, and gps thread so we can ensure it is alive
+	g,gt=gps.start()
+	t=startDBWorker()
 	while True:
+		if not t.isAlive():
+			log.error("DBWorker thread died...restarting")
+			t=startDBWorker()
+		if not gt.isAlive():
+			log.error("GPS thread is Dead")
+			log.info("Restarting GPS")
+			g,gt=gps.start()
 		if g.status==g.gpsStatNoConn:
 			log.warning("No GPS yet....waiting")
 			time.sleep(10)

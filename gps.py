@@ -70,7 +70,8 @@ class GPS():
 			self.ser=serial.Serial('/dev/GPSUSB',4800,timeout=1)
 			self.status=self.gpsStatConn
 		except:
-			log.error(sys.exc_info())
+			log.error("Could Not Find GPS Device, or it is busy")
+			#log.error(sys.exc_info())
 			self.status=self.gpsStatNoConn
 	def get_pos(self):
 		j=json.loads("{}")	
@@ -157,13 +158,6 @@ class GPS():
 		if "GPRMC" in line:
 			self.processGPRMC(line)
 			return
-		#['$GPGLL', '$GPGSA', '$GPRMC', '$GPGSV']
-		#not processing it at this time
-		#print("Not Processing this type:")
-		#print(line)
-		#e=line.split(',')
-		#if e[0] not in not_tracking:
-		#	not_tracking.append(e[0])
 	def processGPRMC(self,line):
 		try:
 			e=line.split(',')
@@ -175,6 +169,7 @@ class GPS():
 			#11 E or west     East subtracks from true course
 			log.debug("Processing GPRMC message")
 			if e[2]=='V':
+				log.warning("GPRMC data warning (V)")
 				return
 			self.cur_pos.speed=float(e[7])*1.15
 			self.cur_pos.course=float(e[8])
@@ -303,7 +298,7 @@ def start():
 	t.name="GPS"
 	t.start()
 	log.info("Tread Running, returning gps object to parent")
-	return gps
+	return gps,t
 
 if __name__=="__main__":
 	g=start()
