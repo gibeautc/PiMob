@@ -91,7 +91,7 @@ class GPS():
 		#check system time and update it if needed and flag is set
 		try:
 			sysTime=datetime.datetime.now()
-			gpsTime=datetime.datetime(self.year,self.month,self.day,self.hour,self.min,self.sec)
+			gpsTime=datetime.datetime(self.cur_pos.year,self.cur_pos.month,self.cur_pos.day,self.cur_pos.hour,self.cur_pos.min,self.cur_pos.sec)
 			delta=sysTime-gpsTime
 		except:
 			log.error("Getting Time")
@@ -104,9 +104,9 @@ class GPS():
 			if self.controlClock:
 				#using 30 seconds now, but could probably make it less (2?)
 				try:
-					dateString=str(self.year)+str(self.month)+str(self.day)
+					dateString=str(self.cur_pos.year)+str(self.cur_pos.month)+str(self.cur_pos.day)
 					subprocess.check_output(['date','+%Y%m%d','-s',dateString])
-					timeString=str(self.hour)+":"+str(self.min)+":"+str(self.sec)
+					timeString=str(self.cur_pos.hour)+":"+str(self.cur_pos.min)+":"+str(self.cur_pos.sec)
 					subprocess.check_output(['date','+%T','-s',timeString])
 					log.info("Time Shift Complete")
 				except:
