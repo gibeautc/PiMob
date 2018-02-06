@@ -88,7 +88,7 @@ class GPS():
 		return j 
 	def checkSystemTime(self):
 		#check system time and update it if needed and flag is set
-		sysTime=datetime.datetime.Now()
+		sysTime=datetime.datetime.now()
 		gpsTime=datetime.datetime(self.year,self.month,self.day,self.hour,self.min,self.sec)
 		delta=sysTime-gpsTime
 		if delta<0:
