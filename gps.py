@@ -67,7 +67,7 @@ class GPS():
 		self.ser=None
 	def connect(self):
 		try:
-			self.ser=serial.Serial('/dev/ttyUSB1',4800,timeout=1)
+			self.ser=serial.Serial('/dev/GPSUSB',4800,timeout=1)
 			self.status=self.gpsStatConn
 		except:
 			log.error(sys.exc_info())
@@ -182,12 +182,10 @@ class GPS():
 		log.debug("Processing GPGGA message")
 		
 		try:
-			self.ave_list.append(self.cur_pos)
-                        if len(self.ave_list)>10:
-                            self.ave_list.pop(0)
 			e=line.split(",")
 			self.cur_pos.posfix=int(e[6])
 			if self.cur_pos.posfix==0:
+				log.warning("GPS Signal Lost")
 				return
 			#if N= neg?
 			lat=float(e[2])
