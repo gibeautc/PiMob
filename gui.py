@@ -38,6 +38,10 @@ tools=["GPS","CLOSE","OFF"]
 
 def tbFunc(button):
 	print("ToolBar Button "+str(button)+" was pressed")
+	if button=="CLOSE":
+		exit()
+	if button=='GPS':
+		app.showSubWindow("gpsWindow")
 
 def checkUpdate():
 	global msgBuffer
@@ -77,11 +81,21 @@ def checkUpdate():
 	if "DAY:" in msg:
 		msg=msg.split(":")
 		app.setLabel("dailyWifi","AP's Added today: "+msg[1])
-
+def gpstbFunc(button):
+	if button=="BACK":
+		app.hideSubWindow("gpsWindow")
 app=gui()
-
+if system=="pi":
+	app.setGeometry("fullscreen")
+app.setTitle("Pi Mobile")
 #Tool BAR setup
 app.addToolbar(tools,tbFunc,findIcon=True)
+
+#GPS Sub window setup
+app.startSubWindow('gpsWindow',modal=True)
+#app.addToolbar("BACK",gpstbFunc,findIcon=True)
+app.addLabel("gpsWindowL1","GPS Info")
+app.stopSubWindow()
 
 #Status Bar Setup
 app.addStatusbar(fields=4)
