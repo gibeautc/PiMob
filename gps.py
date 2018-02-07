@@ -11,6 +11,8 @@
 # add status flag that can be checked maybe
 # add logging
 
+FAKE=False
+
 import math
 import serial
 import sys
@@ -67,7 +69,10 @@ class GPS():
 		self.ser=None
 	def connect(self):
 		try:
-			self.ser=serial.Serial('/dev/GPSUSB',4800,timeout=1)
+			if FAKE:	
+				self.ser=serial.Serial('/dev/pts/2',4800,timeout=1)
+			else:
+				self.ser=serial.Serial('/dev/GPSUSB',4800,timeout=1)
 			self.status=self.gpsStatConn
 		except:
 			log.error("Could Not Find GPS Device, or it is busy")
@@ -123,7 +128,7 @@ class GPS():
 		try:
 			e=line.split("*")
 		except:
-			log.debug("No CheckSum")
+			log.warning("No CheckSum")
 			self.checkF=self.checkF+1
 			return False
 		msg=list(e[0])
@@ -159,6 +164,8 @@ class GPS():
 			self.processGPRMC(line)
 			return
 	def processGPRMC(self,line):
+		log.debug("Got GPRMC line")
+		log.debug(line)
 		try:
 			e=line.split(',')
 			#2-data status V-warning
@@ -187,6 +194,7 @@ class GPS():
 			if self.cur_pos.posfix==0:
 				log.warning("GPS Signal Lost")
 				return
+			log.info("Got Good GPGGA line")
 			#if N= neg?
 			lat=float(e[2])
 			if e[3]=='S':
@@ -284,12 +292,15 @@ def run(g):
 	log.info("Connected")
 	while True:
 		line=gps.ser.readline()
-		if i%100==0:
-			log.info("Checking time")
-			gps.checkSystemTime()	
+		if FAKE:
+			time.sleep(1)
+		#i=i+1
+		#if i%100==0:
+		#	log.info("Checking time")
+			#gps.checkSystemTime()	
 		if len(line)>0:
 			gps.feed(line)
-		#gps.printpos()
+		gps.printpos()
 	
 def start():
 	gps=GPS()

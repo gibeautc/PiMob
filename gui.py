@@ -2,9 +2,13 @@
 from appJar import gui
 import os
 import sys
+if os.path.isdir("/home/pi"):
+	system="pi"
+else:
+	system="chadg"
 
-toGuiPath="/home/chadg/pipeToGui"
-fromGuiPath="/home/chadg/pipeFromGui"
+toGuiPath="/home/"+system+"/pipeToGui"
+fromGuiPath="/home/"+system+"/pipeFromGui"
 #if not os.path.isfile(toGuiPath):
 try:	
 	os.mkfifo(toGuiPath)
@@ -53,7 +57,7 @@ def checkUpdate():
 			msg=lines[x]
 		msgBuffer=[]
 		msgBuffer.append(lines[len(lines)-1])
-		print("Here")	
+		#print("Here")	
 		
 	except:
 		#print(sys.exc_info())
@@ -65,7 +69,14 @@ def checkUpdate():
 		if msg[1]=="1":
 			app.setStatusbarBg("green",3)
 		if msg[1]=="0":
-			app.setStatusbarBg("red",3)		
+			app.setStatusbarBg("red",3)
+	if "TOTAL:" in msg:
+		msg=msg.split(":")
+		app.setLabel("totalWifi","Total Number of AP's: "+msg[1])
+		
+	if "DAY:" in msg:
+		msg=msg.split(":")
+		app.setLabel("dailyWifi","AP's Added today: "+msg[1])
 
 app=gui()
 

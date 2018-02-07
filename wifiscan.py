@@ -9,12 +9,31 @@ import time
 import Queue
 import gps
 import sys
+import os
 from threading import Thread
 db=MySQLdb.connect('localhost','root','aq12ws','wifi')
 curs=db.cursor()
 que=Queue.Queue()
 #sudo iwlist wlan0 scan
 adds=0
+if os.path.isdir("/home/pi"):
+	system="pi"
+else:
+	system="chadg"
+
+toGuiPath="/home/"+system+"/pipeToGui"
+fromGuiPath="/home/"+system+"/pipeFromGui"
+
+try:
+	os.mkfifo(toGuiPath)
+except:
+	pass
+try:
+	os.mkfifo(fromGuiPath)
+except:
+	pass
+toGui=os.open(toGuiPath,os.O_RDWR)
+fromGui=os.open(fromGuiPath,os.O_RDONLY|os.O_NONBLOCK)
 log.basicConfig(filename='scan.log',level=log.INFO,format=    '%(threadName)s %(asctime)s %(levelname)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 
@@ -60,7 +79,7 @@ class entry:
     
 def scan(lat,lon):
 	try:
-		out=subprocess.check_output(['sudo','iwlist','wlp2s0','scan'])
+		out=subprocess.check_output(['sudo','iwlist','wlan0','scan'])
 	except:
 		log.error("Scan Failed")
 		log.error(sys.exc_info())
@@ -126,6 +145,22 @@ def startDBWorker():
 	t.daemon=True
 	t.start()
 	return t
+def sendStats():
+	q="SELECT 1 from devices"
+	curs.execute(q)
+	d=curs.fetchall()
+	tot=len(d)
+	q="SELECT address from records where tor=CURDATE()"
+	curs.execute(q)
+	d=curs.fetchall()
+	lst=[]
+	for dev in d:
+		if dev not in lst:
+			lst.append(dev)
+	day=len(lst)
+	os.write(toGui,"TOTAL:"+str(tot)+"\n")
+	os.write(toGui,"DAY:"+str(day)+"\n")
+
 
 if __name__=="__main__":
     #check time?
@@ -143,14 +178,18 @@ if __name__=="__main__":
 			g,gt=gps.start()
 		if g.status==g.gpsStatNoConn:
 			log.warning("No GPS yet....waiting")
+			os.write(toGui,"GPS:0\n")
 			time.sleep(10)
 			continue
 		if g.cur_pos.posfix:
+			os.write(toGui,"GPS:1\n")
 			scan(str(g.cur_pos.lat),str(g.cur_pos.lon))
 		else:
+			os.write(toGui,"GPS:0\n")
 			log.warning("No Position Fix from GPS....")
 			time.sleep(10)
 		log.info("Current Queue Size: "+str(que.qsize()))
 		log.info("NUMBER OF DEVICES ADDED: "+str(adds))
+		sendStats()
 		time.sleep(5)
     
