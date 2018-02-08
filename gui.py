@@ -25,7 +25,7 @@ pipeOut=os.open(fromGuiPath,os.O_RDWR)
 msgBuffer=[]
 
 #need to clear buffer
-
+#this only works if there is somthing, not if its empty
 #while True:
 #	try:
 #		print("Clearing")
@@ -42,7 +42,12 @@ def tbFunc(button):
 		exit()
 	if button=='GPS':
 		app.showSubWindow("gpsWindow")
-
+	if button=="OFF":
+		shutdown=app.yesNoBox("Shutdown","Do you really want to shut down the system?",parent=None)
+		if shutdown:
+			#do shutdown 
+			pass
+		return 
 def checkUpdate():
 	global msgBuffer
 	msg=""
@@ -91,11 +96,13 @@ app.setTitle("Pi Mobile")
 #Tool BAR setup
 app.addToolbar(tools,tbFunc,findIcon=True)
 
+
+#*****Sub windows********
 #GPS Sub window setup
 app.startSubWindow('gpsWindow',modal=True)
-#app.addToolbar("BACK",gpstbFunc,findIcon=True)
 app.addLabel("gpsWindowL1","GPS Info")
 app.stopSubWindow()
+
 
 #Status Bar Setup
 app.addStatusbar(fields=4)
