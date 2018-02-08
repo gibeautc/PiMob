@@ -12,7 +12,7 @@ else:
 
 toGuiPath="/home/"+system+"/pipeToGui"
 fromGuiPath="/home/"+system+"/pipeFromGui"
-#if not os.path.isfile(toGuiPath):
+
 try:	
 	os.mkfifo(toGuiPath)
 except:
