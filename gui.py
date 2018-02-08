@@ -26,15 +26,6 @@ pipeOut=os.open(fromGuiPath,os.O_RDWR)
 
 msgBuffer=[]
 
-#need to clear buffer
-#this only works if there is somthing, not if its empty
-#while True:
-#	try:
-#		print("Clearing")
-#		c=os.read(pipeIn,1)
-#		print(c)
-#	except:
-#		break
 
 tools=["UPDATE","CLOSE","OFF"]
 
