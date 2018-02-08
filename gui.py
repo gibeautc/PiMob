@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import subprocess
+import socket
 from appJar import gui
 import os
 import sys
@@ -34,7 +36,7 @@ msgBuffer=[]
 #	except:
 #		break
 
-tools=["GPS","CLOSE","OFF"]
+tools=["UPDATE","CLOSE","OFF"]
 
 def tbFunc(button):
 	print("ToolBar Button "+str(button)+" was pressed")
@@ -45,9 +47,51 @@ def tbFunc(button):
 	if button=="OFF":
 		shutdown=app.yesNoBox("Shutdown","Do you really want to shut down the system?",parent=None)
 		if shutdown:
-			#do shutdown 
-			pass
+			#should probably shutdown other processes?
+			#will need to include a way for them to know they should shutdown
+			#so that MySQL connections and other stuff is closed?
+			subprocess.call("shutdown -H now",shell=True)
 		return 
+	if button=="UPDATE":
+		app.thread(gitPull)
+		
+
+def haveInternet(host="8.8.8.8", port=53, timeout=3):
+	"""
+	Host: 8.8.8.8 (google-public-dns-a.google.com)
+	OpenPort: 53/tcp
+	Service: domain (DNS/TCP)
+	"""
+	try:
+		socket.setdefaulttimeout(timeout)
+		socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+		return True
+	except Exception as ex:
+		print ex.message
+		return False
+
+def gitPull():
+	#running in another thread, careful!
+	if haveInternet():
+		#do git pull, check for changed, restart processes as needed
+		print("Going to update from git")
+		git=subprocess.Popen(['git','pull','origin','master'],stdout=subprocess.PIPE)
+		(output,err)=git.communicate()
+		exit_code=git.wait()
+		if "Already up-to-date" in output:
+			app.queueFunction(app.okBox,"Update","Already Up To Date",parent=None)
+			return
+		if "wifiscan.py" in output:
+			#need to restart wifiscan
+			pass
+		if "gui.py" in output:
+			#need to restart gui
+			os.exec*()
+	else:
+		app.queueFunction(app.errorBox,"Connection Required","No Internet Connection is available",parent=None)
+	
+	
+
 def checkUpdate():
 	global msgBuffer
 	msg=""
@@ -86,22 +130,18 @@ def checkUpdate():
 	if "DAY:" in msg:
 		msg=msg.split(":")
 		app.setLabel("dailyWifi","AP's Added today: "+msg[1])
-def gpstbFunc(button):
-	if button=="BACK":
-		app.hideSubWindow("gpsWindow")
+
+
+
+
 app=gui()
 if system=="pi":
 	app.setGeometry("fullscreen")
+else:
+	app.setSize(800,480)
 app.setTitle("Pi Mobile")
 #Tool BAR setup
 app.addToolbar(tools,tbFunc,findIcon=True)
-
-
-#*****Sub windows********
-#GPS Sub window setup
-app.startSubWindow('gpsWindow',modal=True)
-app.addLabel("gpsWindowL1","GPS Info")
-app.stopSubWindow()
 
 
 #Status Bar Setup
@@ -110,13 +150,22 @@ app.setStatusbarWidth(4,3)
 app.setStatusbarBg("red",3)
 app.setStatusbar("GPS",3)
 
-#Lables
-app.addLabel("title","PiMobile")
+#Main Tabbed Frame
+app.startTabbedFrame("Main")
+
+app.startTab("GPS")
+app.stopTab()
+
+app.startTab("WifiScan")
 app.addLabel("totalWifi","Total Number of AP's:")
 app.addLabel("dailyWifi","AP's Added today:")
+app.stopTab()
 
+app.stopTabbedFrame()
 
 #Registered Events
 app.registerEvent(checkUpdate)
+
+#Launch Gui
 app.go()
 
