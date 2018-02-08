@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import psutil
 import subprocess
 import socket
 from appJar import gui
@@ -76,8 +77,15 @@ def gitPull():
 			#need to restart wifiscan
 			pass
 		if "gui.py" in output:
-			#need to restart gui
-			os.exec*()
+			try:
+				p = psutil.Process(os.getpid())
+				for handler in p.get_open_files() + p.connections():
+					os.close(handler.fd)
+			except Exception, e:
+				pass
+
+			python = sys.executable
+			os.execl(python, python, *sys.argv)
 	else:
 		app.queueFunction(app.errorBox,"Connection Required","No Internet Connection is available",parent=None)
 	
