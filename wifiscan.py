@@ -146,13 +146,16 @@ def startDBWorker():
 	t.start()
 	return t
 def sendStats():
+	dbb=MySQLdb.connect("localhost","root","aq12ws","wifi")
+	cursb=dbb.cursor()
 	q="SELECT 1 from devices"
-	curs.execute(q)
-	d=curs.fetchall()
+	cursb.execute(q)
+	d=cursb.fetchall()
 	tot=len(d)
-	q="SELECT address from records where tor=CURDATE()"
-	curs.execute(q)
-	d=curs.fetchall()
+	q="SELECT address from records where DATE(tor)=CURDATE()"
+	cursb.execute(q)
+	d=cursb.fetchall()
+	dbb.close()
 	lst=[]
 	for dev in d:
 		if dev not in lst:

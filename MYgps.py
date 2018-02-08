@@ -11,7 +11,7 @@
 # add status flag that can be checked maybe
 # add logging
 
-FAKE=False
+FAKE=True
 
 import math
 import serial
