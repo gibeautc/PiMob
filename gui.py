@@ -5,6 +5,10 @@ import socket
 from appJar import gui
 import os
 import sys
+import gpsPoll
+gpsObj=gpsPoll.GpsPoller()
+gpsObj.start()
+
 if os.path.isdir("/home/pi"):
 	system="pi"
 else:
@@ -33,6 +37,7 @@ tools=["UPDATE","CLOSE","OFF"]
 def tbFunc(button):
 	print("ToolBar Button "+str(button)+" was pressed")
 	if button=="CLOSE":
+		#gpsObj.running=False
 		exit()
 	if button=='GPS':
 		app.showSubWindow("gpsWindow")
@@ -89,6 +94,14 @@ def gitPull():
 	else:
 		app.queueFunction(app.errorBox,"Connection Required","No Internet Connection is available",parent=None)
 	
+def updateGPS():
+	fix=gpsPoll.gpsd.fix
+	app.setLabel("lbLat",fix.latitude)
+	app.setLabel("lbLon",fix.longitude)
+	#currently in m/s for speed
+	app.setLabel("lbSpeed",fix.speed)
+	#currently in m for altitude
+	app.setLabel("lbAlt",fix.altitude)
 	
 
 def checkUpdate():
@@ -133,38 +146,52 @@ def checkUpdate():
 
 
 
+
+def appSetup():
+	if system=="pi":
+		app.setGeometry("fullscreen")
+	else:
+		app.setSize(800,480)
+	app.setTitle("Pi Mobile")
+	#Tool BAR setup
+	app.addToolbar(tools,tbFunc,findIcon=True)
+	
+	
+	#Status Bar Setup
+	app.addStatusbar(fields=4)
+	app.setStatusbarWidth(4,3)
+	app.setStatusbarBg("red",3)
+	app.setStatusbar("GPS",3)
+	
+	#Main Tabbed Frame
+	app.startTabbedFrame("Main")
+	
+	app.startTab("GPS")
+	app.addLabel("gpsl1","Lat",0,0)
+	app.addLabel("gpsl2","Lon",1,0)
+	app.addLabel("gpsl3","Alt",2,0)
+	app.addLabel("gpsl4","Speed",3,0)
+	app.addLabel("lbLat","00.000",0,1)
+	app.addLabel("lbLon","00.000",1,1)
+	app.addLabel("lbAlt","00.000",2,1)
+	app.addLabel("lbSpeed","00.000",3,1)
+	app.stopTab()
+	
+	app.startTab("WifiScan")
+	app.addLabel("totalWifi","Total Number of AP's:")
+	app.addLabel("dailyWifi","AP's Added today:")
+	app.stopTab()
+	
+	app.stopTabbedFrame()
+	
+	#Registered Events
+	app.registerEvent(checkUpdate)
+	app.registerEvent(updateGPS)
+
+
 app=gui()
-if system=="pi":
-	app.setGeometry("fullscreen")
-else:
-	app.setSize(800,480)
-app.setTitle("Pi Mobile")
-#Tool BAR setup
-app.addToolbar(tools,tbFunc,findIcon=True)
-
-
-#Status Bar Setup
-app.addStatusbar(fields=4)
-app.setStatusbarWidth(4,3)
-app.setStatusbarBg("red",3)
-app.setStatusbar("GPS",3)
-
-#Main Tabbed Frame
-app.startTabbedFrame("Main")
-
-app.startTab("GPS")
-app.stopTab()
-
-app.startTab("WifiScan")
-app.addLabel("totalWifi","Total Number of AP's:")
-app.addLabel("dailyWifi","AP's Added today:")
-app.stopTab()
-
-app.stopTabbedFrame()
-
-#Registered Events
-app.registerEvent(checkUpdate)
-
+if __name__=="__main__":
+	appSetup()
 #Launch Gui
-app.go()
+	app.go()
 

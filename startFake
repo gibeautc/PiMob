@@ -1,0 +1,3 @@
+#!/bin/bash
+
+gpsfake -c 1 fakeGpsData
