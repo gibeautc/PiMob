@@ -7,9 +7,9 @@ import subprocess
 import sys
 import time
 import Queue
-import gps
 import sys
 import os
+import gpsPoll
 from threading import Thread
 db=MySQLdb.connect('localhost','root','aq12ws','wifi')
 curs=db.cursor()
@@ -169,24 +169,26 @@ if __name__=="__main__":
     #check time?
 	#global adds
 	#get gps object, and gps thread so we can ensure it is alive
-	g,gt=gps.start()
-	t=startDBWorker()
+	g=gpsPoll.GpsPoller()
+        g.start()
+        t=startDBWorker()
 	while True:
 		if not t.isAlive():
 			log.error("DBWorker thread died...restarting")
 			t=startDBWorker()
-		if not gt.isAlive():
+		if not g.running:
 			log.error("GPS thread is Dead")
 			log.info("Restarting GPS")
-			g,gt=gps.start()
-		if g.status==g.gpsStatNoConn:
-			log.warning("No GPS yet....waiting")
-			os.write(toGui,"GPS:0\n")
-			time.sleep(10)
-			continue
-		if g.cur_pos.posfix:
+			g=gpsPoller()
+                        g.start()
+		if gpsPoll.gpsd.fix.mode>0:
+			#log.warning("No GPS yet....waiting")
+			#os.write(toGui,"GPS:0\n")
+			#time.sleep(10)
+			#continue
+		        #if g.:
 			os.write(toGui,"GPS:1\n")
-			scan(str(g.cur_pos.lat),str(g.cur_pos.lon))
+			scan(str(gpsPoll.gpsd.fix.latitude),str(gpsPoll.gpsd.fix.longitude))
 		else:
 			os.write(toGui,"GPS:0\n")
 			log.warning("No Position Fix from GPS....")
